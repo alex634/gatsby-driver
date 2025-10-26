@@ -1,6 +1,6 @@
 obj-m := gatsby.o
 
-gatsby-obj := gatsby.c gatsby_contents.c
+gatsby-objs := gatsby-driver.o gatsby_contents.o
 
 all:
 	chmod u+x ./generate_gatsby_contents.sh

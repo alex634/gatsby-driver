@@ -11,7 +11,26 @@ MODULE_DESCRIPTION("A driver that endlessly outputs the text of The Great Gatsby
 MODULE_LICENSE("GPL");
 
 static ssize_t gatsby_read (struct file * file, char __user * buf, size_t length, loff_t * offset) {
-    return 0;
+
+    size_t copied = 0;
+    size_t normalized_offset = *offset % text_length;
+
+    while (copied < length) {
+        //< Amount left to copy from current offset in source buffer 
+        //> Remaining bytes necessary to copy to the user buffer
+        if (text_length - normalized_offset < length - copied) {
+            copy_to_user(buf, (const void *)(text + normalized_offset), text_length - normalized_offset);
+            copied += text_length - normalized_offset;
+            normalized_offset = 0;
+
+        } else {
+            copy_to_user(buf, (const void *)(text + normalized_offset), length - copied);
+            copied += length - copied;
+            normalized_offset += length - copied;
+        } 
+    }
+
+    return length;
 }
 
 static ssize_t gatsby_write (struct file * file, const char __user * buf, size_t length, loff_t * offset) {
@@ -52,12 +71,10 @@ static int __init gatsby_init(void) {
     return 0;
 }
 
-static int __exit gatsby_exit(void) { 
+static void __exit gatsby_exit(void) { 
     unregister_chrdev(major, "gatsby");
     
     printk(KERN_INFO "gatsby: Driver removed from kernel.");
-    
-    return 0;
 }
 
 module_init(gatsby_init);
